@@ -16,8 +16,10 @@ namespace WeatherForecastProvider.DataStorage
     {
       string jsonFile = JsonConvert.SerializeObject(data);
 
-      string path = _configuration.FilePath + $"weatherForecast_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.json";
-      
+      Directory.CreateDirectory(_configuration.FilePath);
+
+      string path = _configuration.FilePath + $"/weatherForecast_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.json";
+
       File.WriteAllText(path, jsonFile);
     }
   }
