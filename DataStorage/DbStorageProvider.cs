@@ -4,7 +4,12 @@ using WeatherForecastProvider.Services;
 
 namespace WeatherForecastProvider.DataStorage
 {
-  public class DbStorageProvider : IDataStorage
+  public interface IDbStorage
+  {
+    IEnumerable<WeatherForecastModel> StoreData(List<WeatherForecastModel> data);
+  }
+
+  public class DbStorageProvider : IDbStorage
   {
     private readonly ForecastContext _context;
     private readonly IWeatherForecastDatabaseMapper _mapper;
@@ -14,13 +19,32 @@ namespace WeatherForecastProvider.DataStorage
       _context = context;
       _mapper = mapper;
     }
-    public void StoreData(List<WeatherForecastModel> data)
+    public IEnumerable<WeatherForecastModel> StoreData(List<WeatherForecastModel> data)
     {
       using (var db = _context)
       {
-        db.WeatherForecasts.AddRange(_mapper.MapToDbModel(data));
-        var addedEntities = db.SaveChanges();
-        Console.WriteLine($"{addedEntities} entities were added to db");
+        var latestForecasts = db.WeatherForecasts
+          .GroupBy(f => f.AirportCode, (key, group) => group.OrderByDescending(wf => wf.IssueTime).First())
+          .ToDictionary(wf => wf.AirportCode, wf => wf.IssueTime);
+
+        var addedForecasts = new List<WeatherForecastModel>();
+
+        foreach (var model in data)
+        {
+          if (latestForecasts.TryGetValue(model.AirportCode, out var issueTime))
+          {
+            if (model.IssueTime > issueTime)
+            {
+              addedForecasts.Add(model);
+            }
+          }
+
+          addedForecasts.Add(model);
+        }
+
+        db.WeatherForecasts.AddRange(_mapper.MapToDbModel(addedForecasts));
+        db.SaveChanges();
+        return addedForecasts;
       }
     }
   }

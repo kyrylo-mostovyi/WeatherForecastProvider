@@ -4,7 +4,11 @@ using WeatherForecastProvider.Services;
 
 namespace WeatherForecastProvider.DataStorage
 {
-  public class FileStorageProvider : IDataStorage
+  public interface IFileStorage
+  {
+    void StoreData(List<WeatherForecastModel> data);
+  }
+  public class FileStorageProvider : IFileStorage
   {
     private readonly ForecastConfiguration _configuration;
 

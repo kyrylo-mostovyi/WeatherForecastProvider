@@ -4,7 +4,7 @@ using WeatherForecastProvider.Services;
 
 namespace WeatherForecastProvider
 {
-  public class Program
+    public class Program
   {
     public static void Main(string[] args)
     {
@@ -24,18 +24,8 @@ namespace WeatherForecastProvider
               services.AddSingleton<IWeatherForecastService, WeatherForecastService>();
               services.AddSingleton<IWeatherForecastMapper, WeatherForecastDtoMapper>();
               services.AddSingleton<IWeatherForecastDatabaseMapper, WeatherForecastDatabaseMapper>();
-              services.AddSingleton<IIssueTimeChecker, IssueTimeChecker>();
-              services.AddSingleton<IWeatherForecastIssueTimeFilteringService, WeatherForecastIssueTimeFilteringService>();
-
-              if (forecastConfig.StoreToDb)
-              {
-                services.AddScoped<IDataStorage, DbStorageProvider>();
-              }
-              else
-              {
-                services.AddScoped<IDataStorage, FileStorageProvider>();
-              }
-
+              services.AddScoped<IDbStorage, DbStorageProvider>();
+              services.AddScoped<IFileStorage, FileStorageProvider>();
               services.AddHostedService<TimedWeatherForecastWorker>();
             });
   }

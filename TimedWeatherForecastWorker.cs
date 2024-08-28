@@ -23,8 +23,7 @@ namespace WeatherForecastProvider
     }
 
     private async Task DoWork(CancellationToken stoppingToken)
-    {
-      
+    {     
       using (var scope = Services.CreateScope())
       {
         var weatherForecastService =
@@ -33,16 +32,17 @@ namespace WeatherForecastProvider
 
         var forecasts = await weatherForecastService.GetWeatherForecastAsync(_configuration.AirportCodes);
 
-        var filteringService = scope.ServiceProvider
-                .GetRequiredService<IWeatherForecastIssueTimeFilteringService>();
+        var dbStorage = scope.ServiceProvider
+                .GetRequiredService<IDbStorage>();
+        
+        var storedForecasts = dbStorage.StoreData(forecasts.ToList());
 
-        var fileredForecasts = filteringService.GetForecastsWithNewIssueTime(forecasts);
-
-        if (fileredForecasts != null && fileredForecasts.Any())
+        if (storedForecasts != null && storedForecasts.Any() && _configuration.StoreToFile)
         {
           var dataStorage = scope.ServiceProvider
-                .GetRequiredService<IDataStorage>();
-          dataStorage.StoreData(forecasts.ToList());
+                .GetRequiredService<IFileStorage>();
+
+          dataStorage.StoreData(storedForecasts.ToList());
         }
       }
     }
