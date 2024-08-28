@@ -29,11 +29,11 @@ namespace WeatherForecastProvider
 
               if (forecastConfig.StoreToDb)
               {
-                services.AddSingleton<IDataStorage, DbStorageProvider>();
+                services.AddScoped<IDataStorage, DbStorageProvider>();
               }
               else
               {
-                services.AddSingleton<IDataStorage, FileStorageProvider>();
+                services.AddScoped<IDataStorage, FileStorageProvider>();
               }
 
               services.AddHostedService<TimedWeatherForecastWorker>();
