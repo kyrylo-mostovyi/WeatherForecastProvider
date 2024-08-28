@@ -24,6 +24,8 @@ namespace WeatherForecastProvider
               services.AddSingleton<IWeatherForecastService, WeatherForecastService>();
               services.AddSingleton<IWeatherForecastMapper, WeatherForecastDtoMapper>();
               services.AddSingleton<IWeatherForecastDatabaseMapper, WeatherForecastDatabaseMapper>();
+              services.AddSingleton<IIssueTimeChecker, IssueTimeChecker>();
+              services.AddSingleton<IWeatherForecastIssueTimeFilteringService, WeatherForecastIssueTimeFilteringService>();
 
               if (forecastConfig.StoreToDb)
               {

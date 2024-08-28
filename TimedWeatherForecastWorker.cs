@@ -7,15 +7,20 @@ namespace WeatherForecastProvider
   public class TimedWeatherForecastWorker : IHostedService, IDisposable
   {
     private readonly IWeatherForecastService _weatherForecastService;
+    private readonly IWeatherForecastIssueTimeFilteringService _weatherForecastIssueTimeFilteringService;
     private readonly IDataStorage _dataStorage;
     private readonly ForecastConfiguration _configuration;
     private Timer? _timer = null;
 
-    public TimedWeatherForecastWorker(ForecastConfiguration config, IWeatherForecastService weatherForecastService, IDataStorage dataStorage)
+    public TimedWeatherForecastWorker(ForecastConfiguration config, 
+      IWeatherForecastService weatherForecastService, 
+      IDataStorage dataStorage, 
+      IWeatherForecastIssueTimeFilteringService weatherForecastIssueTimeFilteringService)
     {
       _configuration = config;
       _weatherForecastService = weatherForecastService;
       _dataStorage = dataStorage;
+      _weatherForecastIssueTimeFilteringService = weatherForecastIssueTimeFilteringService;
     }
 
     public Task StartAsync(CancellationToken stoppingToken)
@@ -30,10 +35,13 @@ namespace WeatherForecastProvider
 
     private async void DoWork(object? state)
     {
-      var forecast = await _weatherForecastService.GetWeatherForecastAsync(_configuration.AirportCodes);
-      if (forecast != null && forecast.Any())
+      var forecasts = await _weatherForecastService.GetWeatherForecastAsync(_configuration.AirportCodes);
+
+      var fileredFoercasts = _weatherForecastIssueTimeFilteringService.GetForecastsWithNewIssueTime(forecasts);
+      
+      if (fileredFoercasts != null && fileredFoercasts.Any())
       {
-        _dataStorage.StoreData(forecast.ToList());
+        _dataStorage.StoreData(forecasts.ToList());
       }
     }
 
