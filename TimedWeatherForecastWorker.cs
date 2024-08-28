@@ -4,10 +4,11 @@ using WeatherForecastProvider.Services;
 
 namespace WeatherForecastProvider
 {
-  public class TimedWeatherForecastWorker : BackgroundService
+  public class TimedWeatherForecastWorker : BackgroundService, IDisposable
   {
     public IServiceProvider Services { get; }
     private readonly ForecastConfiguration _configuration;
+    private Timer? _timer = null;
 
     public TimedWeatherForecastWorker(IServiceProvider services, ForecastConfiguration config)
     {
@@ -19,10 +20,11 @@ namespace WeatherForecastProvider
     {
       Console.WriteLine("Started weather forecast service.");
 
-      await DoWork(stoppingToken);
+      _timer = new Timer(DoWork, null, TimeSpan.Zero,
+            TimeSpan.FromSeconds(_configuration.TimeInSeconds));
     }
 
-    private async Task DoWork(CancellationToken stoppingToken)
+    private async void DoWork(object? state)
     {     
       using (var scope = Services.CreateScope())
       {
@@ -50,6 +52,11 @@ namespace WeatherForecastProvider
     public override async Task StopAsync(CancellationToken stoppingToken)
     {
       await base.StopAsync(stoppingToken);
+      _timer?.Change(Timeout.Infinite, 0);
+    }
+    public void Dispose()
+    {
+      _timer?.Dispose();
     }
   }
 }
