@@ -21,6 +21,8 @@ namespace WeatherForecastProvider.DataStorage
     }
     public IEnumerable<WeatherForecastModel> StoreData(List<WeatherForecastModel> data)
     {
+      using (var db = _context)
+      {
         var latestForecasts = _context.WeatherForecasts
           .GroupBy(f => f.AirportCode, (key, group) => group.OrderByDescending(wf => wf.IssueTime).First())
           .ToDictionary(wf => wf.AirportCode, wf => wf.IssueTime);
@@ -42,9 +44,10 @@ namespace WeatherForecastProvider.DataStorage
           }
         }
 
-      _context.WeatherForecasts.AddRange(_mapper.MapToDbModel(addedForecasts));
-      _context.SaveChanges();
-      return addedForecasts;
+        _context.WeatherForecasts.AddRange(_mapper.MapToDbModel(addedForecasts));
+        _context.SaveChanges();
+        return addedForecasts;
+      } 
     }
   }
 }
