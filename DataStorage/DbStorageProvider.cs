@@ -38,8 +38,10 @@ namespace WeatherForecastProvider.DataStorage
               addedForecasts.Add(model);
             }
           }
-
-          addedForecasts.Add(model);
+          else
+          {
+            addedForecasts.Add(model);
+          }
         }
 
         db.WeatherForecasts.AddRange(_mapper.MapToDbModel(addedForecasts));
