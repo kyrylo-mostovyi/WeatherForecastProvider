@@ -4,59 +4,52 @@ using WeatherForecastProvider.Services;
 
 namespace WeatherForecastProvider
 {
-  public class TimedWeatherForecastWorker : IHostedService, IDisposable
+  public class TimedWeatherForecastWorker : BackgroundService
   {
-    private readonly IWeatherForecastService _weatherForecastService;
-    private readonly IWeatherForecastIssueTimeFilteringService _weatherForecastIssueTimeFilteringService;
-    private readonly IDataStorage _dataStorage;
+    public IServiceProvider Services { get; }
     private readonly ForecastConfiguration _configuration;
-    private Timer? _timer = null;
 
-    public TimedWeatherForecastWorker(ForecastConfiguration config, 
-      IWeatherForecastService weatherForecastService, 
-      IDataStorage dataStorage, 
-      IWeatherForecastIssueTimeFilteringService weatherForecastIssueTimeFilteringService)
+    public TimedWeatherForecastWorker(IServiceProvider services, ForecastConfiguration config)
     {
+      Services = services;
       _configuration = config;
-      _weatherForecastService = weatherForecastService;
-      _dataStorage = dataStorage;
-      _weatherForecastIssueTimeFilteringService = weatherForecastIssueTimeFilteringService;
     }
 
-    public Task StartAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
       Console.WriteLine("Started weather forecast service.");
 
-      _timer = new Timer(DoWork, null, TimeSpan.Zero,
-          TimeSpan.FromSeconds(_configuration.Seconds));
-
-      return Task.CompletedTask;
+      await DoWork(stoppingToken);
     }
 
-    private async void DoWork(object? state)
+    private async Task DoWork(CancellationToken stoppingToken)
     {
-      var forecasts = await _weatherForecastService.GetWeatherForecastAsync(_configuration.AirportCodes);
-
-      var fileredFoercasts = _weatherForecastIssueTimeFilteringService.GetForecastsWithNewIssueTime(forecasts);
       
-      if (fileredFoercasts != null && fileredFoercasts.Any())
+      using (var scope = Services.CreateScope())
       {
-        _dataStorage.StoreData(forecasts.ToList());
+        var weatherForecastService =
+            scope.ServiceProvider
+                .GetRequiredService<IWeatherForecastService>();
+
+        var forecasts = await weatherForecastService.GetWeatherForecastAsync(_configuration.AirportCodes);
+
+        var filteringService = scope.ServiceProvider
+                .GetRequiredService<IWeatherForecastIssueTimeFilteringService>();
+
+        var fileredForecasts = filteringService.GetForecastsWithNewIssueTime(forecasts);
+
+        if (fileredForecasts != null && fileredForecasts.Any())
+        {
+          var dataStorage = scope.ServiceProvider
+                .GetRequiredService<IDataStorage>();
+          dataStorage.StoreData(forecasts.ToList());
+        }
       }
     }
 
-    public Task StopAsync(CancellationToken stoppingToken)
+    public override async Task StopAsync(CancellationToken stoppingToken)
     {
-      Console.WriteLine("Weather forecast service is stopping.");
-
-      _timer?.Change(Timeout.Infinite, 0);
-
-      return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-      _timer?.Dispose();
+      await base.StopAsync(stoppingToken);
     }
   }
 }
