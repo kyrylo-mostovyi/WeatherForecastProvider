@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WeatherForecastProvider.DataStorage;
 
 namespace WeatherForecastProvider.Services
 {
-  public interface IWeatherForecastIssueTimeFilteringService
+    public interface IWeatherForecastIssueTimeFilteringService
   {
     IEnumerable<WeatherForecastModel> GetForecastsWithNewIssueTime(IEnumerable<WeatherForecastModel> forecasts);
   }
@@ -21,7 +22,7 @@ namespace WeatherForecastProvider.Services
     }
     public IEnumerable<WeatherForecastModel> GetForecastsWithNewIssueTime(IEnumerable<WeatherForecastModel> forecasts)
     {
-      return forecasts.Where(f => _issueTimeChecker.IsTheSameIssueTime(f.AirportCode, f.IssueTime));
+      return forecasts.Where(f => !_issueTimeChecker.IsTheSameIssueTime(f.AirportCode, f.IssueTime));
     }
   }
 }
