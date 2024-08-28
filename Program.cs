@@ -20,7 +20,7 @@ namespace WeatherForecastProvider
               ForecastConfiguration forecastConfig = configuration.GetSection("ForecastConfig").Get<ForecastConfiguration>();
 
               services.AddSingleton(forecastConfig);
-              services.AddSingleton<ForecastContext>();
+              services.AddScoped<ForecastContext>();
               services.AddSingleton<IWeatherForecastService, WeatherForecastService>();
               services.AddSingleton<IWeatherForecastMapper, WeatherForecastDtoMapper>();
               services.AddSingleton<IWeatherForecastDatabaseMapper, WeatherForecastDatabaseMapper>();
